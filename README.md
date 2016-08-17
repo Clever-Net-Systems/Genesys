@@ -21,6 +21,8 @@ apt-get install python-dnspython dialog python-pip
 pip install python2-pythondialog debinterface
 ```
 genesys
+
+download Genesys .deb file [here](https://github.com/clevernet/Genesys/releases)
 ```
 dpkg -i genesys.deb
 ```
