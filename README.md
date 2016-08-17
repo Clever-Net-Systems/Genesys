@@ -27,3 +27,17 @@ download Genesys .deb file [here](https://github.com/clevernet/Genesys/releases)
 dpkg -i genesys.deb
 ```
 Done :)
+
+## Usage
+Genesys is based on systemd. You can easily turn on or down the genesys service like this:
+
+### Enable Genesys for the next boot
+```
+systemctl enable genesys.service
+```
+
+### Disable Genesys
+```
+systemctl disable genesys.service
+```
+! When leaving the Genesys assistant, by default, the Genesys wizard is disabled !
