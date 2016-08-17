@@ -4,7 +4,7 @@ Virtual machine first start configuration assistant
 ## Prerequisites
 Here are some prerequisites needed by Genesys
 
- - [dialog](ftp://ftp.traduc.org/pub/lgazette/html/2004/101/lg101-P.html)
+ - [dialog](http://linuxgazette.net/101/sunil.html)
  - [python-dnspython](http://www.dnspython.org/)
  - [python2-pythondialog](http://pythondialog.sourceforge.net/)
  - [debinterface](https://github.com/dggreenbaum/debinterface)
