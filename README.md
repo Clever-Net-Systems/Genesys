@@ -17,27 +17,49 @@ Here are some prerequisites needed by Genesys
 
 ### prerequisites:
 ```
-apt-get install python-dnspython dialog python-pip
+apt-get install dialog python-pip
 pip install python2-pythondialog debinterface
 ```
 ### genesys:
 
 download Genesys .deb file [here](https://github.com/clevernet/Genesys/releases)
 ```
-dpkg -i genesys.deb
+dpkg -i genesys_systemv.deb
 ```
+or
+```
+dpkg -i genesys_systemd.deb
+```
+
 Done :)
 
 ## Usage
 Genesys is based on systemd. You can easily turn on or down the genesys service like this:
 
-### Enable Genesys for the next boot
+### Systemd
+
+#### Enable Genesys for the next boot
+After installing the genesys deb file, genesys is actived for the next reboot by defaut.
 ```
 systemctl enable genesys.service
 ```
 
-### Disable Genesys
+#### Disable Genesys
 ```
 systemctl disable genesys.service
+```
+! When leaving the Genesys assistant, by default, the Genesys wizard is disabled !
+
+### SystemV
+
+#### Enable Genesys for the next boot
+After installing the genesys deb file, genesys is actived for the next reboot by defaut.
+```
+update-rc.d genesys enable
+```
+
+#### Disable Genesys
+```
+update-rc.d genesys disable
 ```
 ! When leaving the Genesys assistant, by default, the Genesys wizard is disabled !
