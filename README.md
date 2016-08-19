@@ -33,7 +33,7 @@ dpkg -i genesys_systemd.deb
 Done :)
 
 ## Usage
-Genesys is based on systemd. You can easily turn on or down the genesys service like this:
+Genesys is based on systemd or systemV. You can easily turn on or down the genesys service like this:
 
 ### Systemd
 
