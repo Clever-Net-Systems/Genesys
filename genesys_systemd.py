@@ -255,13 +255,23 @@ def run_process(command, stderr=False):
 def set_hostname(hostname):
     if validate_hostname(hostname):
         os.system('hostname '+str(hostname))
+        persistant_hostname = write_hostname(hostname)
         new_hostname = {}
         new_hostname = run_process('hostname', stderr=False)
         new_hostname_value = new_hostname['output']
         new_hostname_value = re.sub('\n','', new_hostname_value)
-        if new_hostname_value == hostname:
+        if new_hostname_value == hostname and persistant_hostname:
             return True
     return False
+
+def write_hostname(hostname):
+    try:
+        hostname_file = open('/etc/hostname', 'w')
+        hostname_file.write(str(hostname)+"\n")
+        hostname_file.close()
+        return True
+    except:
+        return False
 
 def validate_hostname(hostname):
     domain_regex = re.compile("(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$")
