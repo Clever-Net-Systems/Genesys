@@ -151,7 +151,6 @@ def ask_static_config():
 
 def clear_and_quit():
     os.system('clear')
-    os.system('chvt 1')
     os.system('systemctl disable genesys.service')
     os.system('clear')
     sys.exit(0)
@@ -348,6 +347,5 @@ def list_eth():
 # ------------------------------------------------------------------------------
 
 # MAIN -------------------------------------------------------------------------
-os.system('chvt 2')
 run(0)
 # ------------------------------------------------------------------------------
