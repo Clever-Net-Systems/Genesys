@@ -40,6 +40,8 @@ class GlobalVars:
   TXT_MESSAGE_STATIC = 'Configuring for static IP address...'
   stored_interfaces = ""
   selected_interface = ""
+  puppet_file_path = "/etc/puppet/puppet.conf"
+  domain = "intra-tpg.ch"
 
 ## Interface and window systems ------------------------------------------------
 def ini_interface(bg_title):
@@ -268,9 +270,20 @@ def write_hostname(hostname):
         hostname_file = open('/etc/hostname', 'w')
         hostname_file.write(str(hostname)+"\n")
         hostname_file.close()
+        if os.path.exists(str(puppet_file_path)):
+            replace_in_file(str(puppet_file_path), "XXXXXX."+str(domain), str(hostname)+"."+str(domain))
         return True
     except:
         return False
+
+def replace_in_file(path, string_to_find, replace_by):
+    with open(str(path),"r") as config_file:
+        newline=[]
+        for word in config_file.readlines():
+            newline.append(word.replace(str(string_to_find),str(replace_by)))
+    with open(str(path),"w") as config_file:
+        for line in newline:
+            config_file.writelines(line)
 
 def validate_hostname(hostname):
     domain_regex = re.compile("(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$")
@@ -347,5 +360,6 @@ def list_eth():
 # ------------------------------------------------------------------------------
 
 # MAIN -------------------------------------------------------------------------
-run(0)
+if __name__ == '__main__':
+    run(0)
 # ------------------------------------------------------------------------------
