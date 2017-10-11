@@ -23,8 +23,8 @@ pip install python2-pythondialog debinterface
 
 systemd:
 ```
-wget https://github.com/clevernet/Genesys/releases/download/0.2/genesys_systemd.deb
-dpkg -i genesys_systemd.deb
+wget https://github.com/Clever-Net-Systems/Genesys/releases/download/0.3/genesys_systemd-0.3.deb
+dpkg -i genesys_systemd-0.3.deb
 ```
 or
 
