@@ -1,25 +1,24 @@
 #!/usr/bin/python
 # coding: utf-8
 #########################################################################################
-#   Clever Net Systems [~]                                                              #
-#   Clément Hampaï <clement.hampai@clevernetsystems.com>                                #
-#   Genesys VM first start configuration assistant                                      #
-#                                                                                       #
-#	This program is free software: you can redistribute it and/or modify                  #
-#	    it under the terms of the GNU General Public License as published by              #
-#	    the Free Software Foundation, either version 3 of the License, or                 #
-#	    (at your option) any later version.                                               #
-#                                                                                       #
-#	    This program is distributed in the hope that it will be useful,                   #
-#	    but WITHOUT ANY WARRANTY; without even the implied warranty of                    #
-#	    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                     #
-#	    GNU General Public License for more details.                                      #
-#                                                                                       #
-#	    You should have received a copy of the GNU General Public License                 #
-#	    along with this program.  If not, see <http://www.gnu.org/licenses/>.             #
+#   Clever Net Systems [~]                                                     		    #
+#   Clément Hampaï <clement.hampai@clevernetsystems.com>                       		    #
+#   Genesys VM first start configuration assistant           		                    #
+#											                                            #
+#	This program is free software: you can redistribute it and/or modify	   	        #
+#	    it under the terms of the GNU General Public License as published by   	        #
+#	    the Free Software Foundation, either version 3 of the License, or	   	        #
+#	    (at your option) any later version. 					                        #
+#											                                            #
+#	    This program is distributed in the hope that it will be useful,		            #
+#	    but WITHOUT ANY WARRANTY; without even the implied warranty of		            #
+#	    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the		            #
+#	    GNU General Public License for more details. 				                    #
+# 											                                            #
+#	    You should have received a copy of the GNU General Public License 	   	        #
+#	    along with this program.  If not, see <http://www.gnu.org/licenses/>.           #
 #########################################################################################
-
-import locale, sys, os, subprocess, re, time, dns.resolver
+import locale, sys, os, subprocess, re, time
 from debinterface.interfaces import Interfaces
 from dialog import Dialog
 
@@ -41,6 +40,8 @@ class GlobalVars:
   TXT_MESSAGE_STATIC = 'Configuring for static IP address...'
   stored_interfaces = ""
   selected_interface = ""
+  puppet_file_path = "/etc/puppet/puppet.conf"
+  domain = "intra-tpg.ch"
 
 ## Interface and window systems ------------------------------------------------
 def ini_interface(bg_title):
@@ -255,13 +256,34 @@ def run_process(command, stderr=False):
 def set_hostname(hostname):
     if validate_hostname(hostname):
         os.system('hostname '+str(hostname))
+        persistant_hostname = write_hostname(hostname)
         new_hostname = {}
         new_hostname = run_process('hostname', stderr=False)
         new_hostname_value = new_hostname['output']
         new_hostname_value = re.sub('\n','', new_hostname_value)
-        if new_hostname_value == hostname:
+        if new_hostname_value == hostname and persistant_hostname:
             return True
     return False
+
+def write_hostname(hostname):
+    try:
+        hostname_file = open('/etc/hostname', 'w')
+        hostname_file.write(str(hostname)+"\n")
+        hostname_file.close()
+        if os.path.exists(str(puppet_file_path)):
+            replace_in_file(str(puppet_file_path), "XXXXXX."+str(domain), str(hostname)+"."+str(domain))
+        return True
+    except:
+        return False
+
+def replace_in_file(path, string_to_find, replace_by):
+    with open(str(path),"r") as config_file:
+        newline=[]
+        for word in config_file.readlines():
+            newline.append(word.replace(str(string_to_find),str(replace_by)))
+    with open(str(path),"w") as config_file:
+        for line in newline:
+            config_file.writelines(line)
 
 def validate_hostname(hostname):
     domain_regex = re.compile("(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$")
@@ -310,11 +332,12 @@ def create_static_eth_config(selected_iface, addr, netmask, gateway):
             return False
 
 def set_dns(dns_array):
-    dns_srv = dns.resolver.Resolver()
+    resolv_file = open('/etc/resolv.conf', 'w')
     for dns_ip in dns_array.split(','):
         if not validate_ip(dns_ip) and not validate_hostname(dns_ip):
             return False
-    dns_srv.nameservers = dns_array
+        resolv_file.write("nameserver %s\n" % dns_ip)
+    resolv_file.close()
     return True
 
 def reset_eth_config(selected_iface):
@@ -337,5 +360,6 @@ def list_eth():
 # ------------------------------------------------------------------------------
 
 # MAIN -------------------------------------------------------------------------
-run(0)
+if __name__ == '__main__':
+    run(0)
 # ------------------------------------------------------------------------------
