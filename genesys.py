@@ -271,7 +271,7 @@ def write_hostname(hostname):
         hostname_file.write(str(hostname)+"\n")
         hostname_file.close()
         if os.path.exists(str(GlobalVars.puppet_file_path)):
-            replace_in_file(str(GlobalVars.puppet_file_path), "xxxxxx."+str(GlobalVars.domain), str(hostname)+"."+str(GlobalVars.domain))
+            replace_in_file(str(GlobalVars.puppet_file_path), "certname=xxxxxx."+str(GlobalVars.domain), "certname="+str(hostname)+"."+str(GlobalVars.domain))
         return True
     except:
         return False
