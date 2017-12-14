@@ -158,6 +158,8 @@ def clear_and_quit():
     os.system('clear')
     os.system('systemctl disable genesys.service')
     os.system('clear')
+    if platform.dist()[0] == "centos":
+        os.system("chvt 1")
     sys.exit(0)
 
 def clear():
@@ -395,5 +397,7 @@ def list_eth():
 
 # MAIN -------------------------------------------------------------------------
 if __name__ == '__main__':
+    if platform.dist()[0] == "centos":
+        os.system("chvt 2")
     run(0)
 # ------------------------------------------------------------------------------
