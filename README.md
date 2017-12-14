@@ -11,14 +11,25 @@ Here are some prerequisites needed by Genesys
  - [dialog](http://linuxgazette.net/101/sunil.html)
  - [python2-pythondialog](http://pythondialog.sourceforge.net/)
  - [debinterface](https://github.com/dggreenbaum/debinterface)
+ - [confparse](https://code.google.com/archive/p/confparse/)
 
 ## Installation
 
-### prerequisites:
+### prerequisites
+
+#### Debian
 ```
 apt-get install dialog python-pip
-pip install python2-pythondialog debinterface
+pip install python2-pythondialog debinterface confparse
 ```
+
+#### CentOS/RHEL 7
+```
+yum install epel-release
+yum install dialog python-pip
+pip install python2-pythondialog debinterface confparse
+```
+
 ### genesys:
 
 systemd:
