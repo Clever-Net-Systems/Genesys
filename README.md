@@ -30,16 +30,22 @@ yum install dialog python-pip
 pip install python2-pythondialog debinterface confparse
 ```
 
-### genesys:
+### genesys
 
-systemd:
+#### systemd:
+
+##### Debian
 ```
 wget https://github.com/Clever-Net-Systems/Genesys/releases/download/0.4/genesys_systemd-0.4.deb
 dpkg -i genesys_systemd-0.4.deb
 ```
-or
+##### CentOs/RHEL
+```
+wget https://github.com/Clever-Net-Systems/Genesys/releases/download/0.5/genesys-0-5.el7.centos.x86_64.rpm
+yum localinstall genesys-0-5.el7.centos.x86_64.rpm
+```
 
-SystemV:
+#### SystemV:
 ```
 wget https://github.com/clevernet/Genesys/releases/download/0.2/genesys_systemv.deb
 dpkg -i genesys_systemv.deb
