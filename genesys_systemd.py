@@ -158,7 +158,7 @@ def clear_and_quit():
     os.system('clear')
     os.system('systemctl disable genesys.service')
     os.system('clear')
-    if platform.dist()[0] == "centos":
+    if platform.dist()[0] == "centos" or platform.dist()[0] == "redhat":
         os.system("chvt 1")
     sys.exit(0)
 
@@ -219,7 +219,7 @@ def run(next_window_id):
         display_infobox(GlobalVars.TXT_MESSAGE_DHCP)
         if platform.dist()[0] == "debian":
             os.system('systemctl restart networking.service')
-        elif platform.dist()[0] == "centos":
+        elif platform.dist()[0] == "centos" or platform.dist()[0] == "redhat":
             os.system('systemctl restart network')
         display_infobox("Success !")
         time.sleep(3)
@@ -236,7 +236,7 @@ def run(next_window_id):
         display_infobox(GlobalVars.TXT_MESSAGE_STATIC)
         if platform.dist()[0] == "debian":
             os.system('systemctl restart networking.service')
-        elif platform.dist()[0] == "centos":
+        elif platform.dist()[0] == "centos" or platform.dist()[0] == "redhat":
             os.system('systemctl restart network')
         display_infobox("Success !")
         time.sleep(3)
@@ -324,7 +324,7 @@ def create_dhcp_eth_config(selected_iface):
               'addrFam': 'inet',
               'source': GlobalVars.DHCP}, 0)
             interfaces.writeInterfaces()
-        elif platform.dist()[0] == "centos":
+        elif platform.dist()[0] == "centos" or platform.dist()[0] == "redhat":
             properties().delete( 'IPADDR' ).apply_to('/etc/sysconfig/network-scripts/ifcfg-'+str(selected_iface))
             properties().delete( 'NETMASK' ).apply_to('/etc/sysconfig/network-scripts/ifcfg-'+str(selected_iface))
             properties().delete( 'GATEWAY' ).apply_to('/etc/sysconfig/network-scripts/ifcfg-'+str(selected_iface))
@@ -351,7 +351,7 @@ def create_static_eth_config(selected_iface, addr, netmask, gateway):
                   'netmask': netmask,
                   'gateway': gateway}, 0)
                 interfaces.writeInterfaces()
-            elif platform.dist()[0] == "centos":
+            elif platform.dist()[0] == "centos" or platform.dist()[0] == "redhat":
                 # Setup eth
                 properties(
                             BOOTPROTO="static",
@@ -397,7 +397,7 @@ def list_eth():
 
 # MAIN -------------------------------------------------------------------------
 if __name__ == '__main__':
-    if platform.dist()[0] == "centos":
+    if platform.dist()[0] == "centos" or platform.dist()[0] == "redhat":
         os.system("chvt 2")
     run(0)
 # ------------------------------------------------------------------------------
