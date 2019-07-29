@@ -36,19 +36,18 @@ pip install python2-pythondialog debinterface confparse
 
 ##### Debian
 ```
-wget https://github.com/Clever-Net-Systems/Genesys/releases/download/0.4/genesys_systemd-0.4.deb
-dpkg -i genesys_systemd-0.4.deb
+wget https://github.com/Clever-Net-Systems/Genesys/releases/download/0.7/genesys-0.7.deb
+dpkg -i genesys-0.7.deb
 ```
 ##### CentOs/RHEL
 ```
-wget https://github.com/Clever-Net-Systems/Genesys/releases/download/0.5/genesys-0-5.el7.centos.x86_64.rpm
-yum localinstall genesys-0-5.el7.centos.x86_64.rpm
+wget https://github.com/Clever-Net-Systems/Genesys/releases/download/0.7/genesys-0-7.el7.x86_64.rpm
+yum localinstall genesys-0-7.el7.x86_64.rpm
 ```
 
 #### SystemV:
 ```
-wget https://github.com/clevernet/Genesys/releases/download/0.2/genesys_systemv.deb
-dpkg -i genesys_systemv.deb
+Genesys does not support SystemV anymore.
 ```
 
 More download options [here](https://github.com/clevernet/Genesys/releases)
@@ -56,7 +55,7 @@ More download options [here](https://github.com/clevernet/Genesys/releases)
 Done :)
 
 ## Usage
-Genesys is based on systemd or systemV. You can easily turn on or down the genesys service like this:
+Genesys is based on systemd. You can easily turn on or down the genesys service like this:
 
 ### Systemd
 
@@ -69,19 +68,5 @@ systemctl enable genesys.service
 #### Disable Genesys
 ```
 systemctl disable genesys.service
-```
-! When leaving the Genesys assistant, by default, the Genesys wizard is disabled !
-
-### SystemV
-
-#### Enable Genesys for the next boot
-After installing the genesys deb file, genesys is actived for the next reboot by defaut.
-```
-update-rc.d genesys enable
-```
-
-#### Disable Genesys
-```
-update-rc.d genesys disable
 ```
 ! When leaving the Genesys assistant, by default, the Genesys wizard is disabled !
