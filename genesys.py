@@ -18,7 +18,8 @@
 #	    You should have received a copy of the GNU General Public License 	   	        #
 #	    along with this program.  If not, see <http://www.gnu.org/licenses/>.           #
 #########################################################################################
-import locale, sys, os, subprocess, re, time
+import locale, sys, os, subprocess, re, time, platform
+from confparse import properties
 from debinterface.interfaces import Interfaces
 from dialog import Dialog
 
@@ -40,8 +41,11 @@ class GlobalVars:
   TXT_MESSAGE_STATIC = 'Configuring for static IP address...'
   stored_interfaces = ""
   selected_interface = ""
+  previous_hostname = ""
+  setted_hostname = ""
+  setted_ip = ""
   puppet_file_path = "/etc/puppet/puppet.conf"
-  domain = "intra-tpg.ch"
+  domain = "mydomain.net"
 
 ## Interface and window systems ------------------------------------------------
 def ini_interface(bg_title):
@@ -84,6 +88,8 @@ def welcome():
 
 def home_menu():
     dial = ini_interface(GlobalVars.BACKGROUND_TITLE)
+    if validate_hostname(get_hostname()):
+        GlobalVars.previous_hostname = get_hostname()
     choices = []
     choices.append(("hostname", "set this machine's hostname"))
     choices.append(("ipv4", "configure an IPv4 inet"))
@@ -123,7 +129,9 @@ def select_eth():
         print str(eth)
         inet = eth.split(' ', 1)
         inet_name = inet[0].strip()
-        inet_description = inet[1].strip()
+        inet_description = "no description available"
+        if len(inet) > 1:
+            inet_description = inet[1].strip()
         choices.append((inet_name, inet_description))
     selected_interface = display_menu(GlobalVars.HOME_MENU_TXT, choices, dial, "Configure", "Cancel")
     if "ok" in selected_interface:
@@ -152,14 +160,16 @@ def ask_static_config():
     return result
 
 def clear_and_quit():
+    write_hostsfile(GlobalVars.setted_hostname, GlobalVars.setted_ip)
     os.system('clear')
     os.system('systemctl disable genesys.service')
     os.system('clear')
+    if platform.dist()[0] == "centos" or platform.dist()[0] == "redhat":
+        os.system("chvt 1")
     sys.exit(0)
 
 def clear():
     os.system('clear')
-
 # ------------------------------------------------------------------------------
 
 # Misc -------------------------------------------------------------------------
@@ -195,7 +205,8 @@ def run(next_window_id):
         run(1)
     elif next_window_id == 3:
         # Interfaces list
-        GlobalVars.stored_interfaces = Interfaces()
+        if platform.dist()[0] == "debian":
+            GlobalVars.stored_interfaces = Interfaces()
         menu_result = select_eth()
         check_continue(menu_result)
         run(4)
@@ -211,8 +222,12 @@ def run(next_window_id):
         # Interface mode dhcp configuration screen
         final = create_dhcp_eth_config(GlobalVars.selected_interface)
         display_infobox(GlobalVars.TXT_MESSAGE_DHCP)
-        os.system('systemctl restart networking.service')
-        display_infobox("Success !")
+        if platform.dist()[0] == "debian":
+            os.system('systemctl restart networking.service')
+        elif platform.dist()[0] == "centos" or platform.dist()[0] == "redhat":
+            os.system('systemctl restart network')
+        GlobalVars.setted_ip = get_interface_current_ip(GlobalVars.selected_interface)
+        display_infobox("Success !\nCurrent ip: "+str(GlobalVars.setted_ip))
         time.sleep(3)
         run(1)
     elif next_window_id == 6:
@@ -225,7 +240,10 @@ def run(next_window_id):
         gateway = result_values[2]
         final = create_static_eth_config(GlobalVars.selected_interface, addr, mask, gateway)
         display_infobox(GlobalVars.TXT_MESSAGE_STATIC)
-        os.system('systemctl restart networking.service')
+        if platform.dist()[0] == "debian":
+            os.system('systemctl restart networking.service')
+        elif platform.dist()[0] == "centos" or platform.dist()[0] == "redhat":
+            os.system('systemctl restart network')
         display_infobox("Success !")
         time.sleep(3)
         run(1)
@@ -262,8 +280,12 @@ def set_hostname(hostname):
         new_hostname_value = new_hostname['output']
         new_hostname_value = re.sub('\n','', new_hostname_value)
         if new_hostname_value == hostname and persistant_hostname:
+            GlobalVars.setted_hostname = str(hostname)
             return True
     return False
+
+def get_hostname():
+    return os.uname()[1]
 
 def write_hostname(hostname):
     try:
@@ -272,6 +294,43 @@ def write_hostname(hostname):
         hostname_file.close()
         if os.path.exists(str(GlobalVars.puppet_file_path)):
             replace_in_file(str(GlobalVars.puppet_file_path), "certname=xxxxxx."+str(GlobalVars.domain), "certname="+str(hostname)+"."+str(GlobalVars.domain))
+        return True
+    except:
+        return False
+
+def write_hostsfile(hostname, ip):
+    try:
+        path = "/etc/hosts"
+        # hostname and ip setted during this run
+        if validate_hostname(hostname) and validate_ip(ip):
+            append_or_replace_in_file(path, str(ip), str(ip)+"\t"+str(hostname)+"\n")
+            return True
+        # hostname setted during this run. NO ip modification
+        elif validate_hostname(hostname) and not validate_ip(ip):
+            ip = get_interface_current_ip(str(list_eth()).splitlines()[0])
+            append_or_replace_in_file(path, str(ip), str(ip)+"\t"+str(hostname)+"\n")
+            return True
+        # ip setted during this run. NO hostname modification
+        elif not validate_hostname(hostname) and validate_ip(ip):
+            hostname = get_hostname()
+            append_or_replace_in_file(path, str(hostname), str(ip)+"\t"+str(hostname)+"\n")
+            return True
+    except:
+        return False
+
+def append_or_replace_in_file(path, string_to_find, replace_by):
+    try:
+        for line in open(path).readlines():
+            if re.search("\\b"+string_to_find+"\\b", line):
+                return replace_in_file(path, line, replace_by)
+        return append_in_file(path, replace_by)
+    except:
+        return False
+
+def append_in_file(path, string_to_append):
+    try:
+        with open(path, "a+") as append_file:
+            append_file.write(str(string_to_append))
         return True
     except:
         return False
@@ -301,16 +360,32 @@ def validate_ip(ip):
         return False
     return True
 
+def get_interface_current_ip(interface_name):
+    int_ipv4 = os.popen('ip addr show '+str(interface_name)).read().split("inet ")[1].split("/")[0]
+    print int_ipv4
+    if validate_ip(int_ipv4):
+        return int_ipv4
+
 def create_dhcp_eth_config(selected_iface):
     try:
-        interfaces = GlobalVars.stored_interfaces
-        reset_eth_config(selected_iface)
-        interfaces.addAdapter({
-          'name': selected_iface,
-          'auto': True,
-          'addrFam': 'inet',
-          'source': GlobalVars.DHCP}, 0)
-        interfaces.writeInterfaces()
+        if platform.dist()[0] == "debian":
+            interfaces = GlobalVars.stored_interfaces
+            reset_eth_config(selected_iface)
+            interfaces.addAdapter({
+              'name': selected_iface,
+              'auto': True,
+              'addrFam': 'inet',
+              'source': GlobalVars.DHCP}, 0)
+            interfaces.writeInterfaces()
+        elif platform.dist()[0] == "centos" or platform.dist()[0] == "redhat":
+            properties().delete( 'IPADDR' ).apply_to('/etc/sysconfig/network-scripts/ifcfg-'+str(selected_iface))
+            properties().delete( 'NETMASK' ).apply_to('/etc/sysconfig/network-scripts/ifcfg-'+str(selected_iface))
+            properties().delete( 'GATEWAY' ).apply_to('/etc/sysconfig/network-scripts/ifcfg-'+str(selected_iface))
+            properties(
+                        TYPE="ethernet",
+                        BOOTPROTO="dhcp",
+                        ONBOOT="yes"
+                    ).apply_to('/etc/sysconfig/network-scripts/ifcfg-'+str(selected_iface))
         return True
     except:
         return False
@@ -318,17 +393,29 @@ def create_dhcp_eth_config(selected_iface):
 def create_static_eth_config(selected_iface, addr, netmask, gateway):
     if validate_ip(addr) and validate_ip(netmask) and validate_ip(gateway):
         try:
-            interfaces = GlobalVars.stored_interfaces
-            reset_eth_config(selected_iface)
-            interfaces.addAdapter({
-              'name': selected_iface,
-              'auto': True,
-              'addrFam': 'inet',
-              'source': GlobalVars.STATIC,
-              'address': addr,
-              'netmask': netmask,
-              'gateway': gateway}, 0)
-            interfaces.writeInterfaces()
+            if platform.dist()[0] == "debian":
+                interfaces = GlobalVars.stored_interfaces
+                reset_eth_config(selected_iface)
+                interfaces.addAdapter({
+                  'name': selected_iface,
+                  'auto': True,
+                  'addrFam': 'inet',
+                  'source': GlobalVars.STATIC,
+                  'address': addr,
+                  'netmask': netmask,
+                  'gateway': gateway}, 0)
+                interfaces.writeInterfaces()
+            elif platform.dist()[0] == "centos" or platform.dist()[0] == "redhat":
+                # Setup eth
+                properties(
+                            TYPE="ethernet",
+                            BOOTPROTO="static",
+                            IPADDR=str(addr),
+                            NETMASK=str(netmask),
+                            ONBOOT="yes",
+                            GATEWAY=str(gateway)
+                        ).apply_to('/etc/sysconfig/network-scripts/ifcfg-'+str(selected_iface))
+            GlobalVars.setted_ip = str(addr)
             return True
         except:
             return False
@@ -357,13 +444,16 @@ def reset_eth_config(selected_iface):
             interfaces.removeAdapterByName(selected_iface)
             interfaces.writeInterfaces()
 
+
 def list_eth():
     available_adapters = []
-    available_iface_list = run_process("ifconfig -a | grep eth")
+    available_iface_list = run_process("ip link show | grep -v 'link/\|LOOPBACK' | awk -F ':' '{print $2}' | sed 's~[[:blank:]]~~g'")
     return available_iface_list['output']
 # ------------------------------------------------------------------------------
 
 # MAIN -------------------------------------------------------------------------
 if __name__ == '__main__':
+    if platform.dist()[0] == "centos" or platform.dist()[0] == "redhat":
+        os.system("chvt 2")
     run(0)
 # ------------------------------------------------------------------------------
